@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc"
 	"io"
 	"net/http"
 	"net/url"
@@ -141,7 +142,10 @@ func (s *Server) buildGrpcRoute(up Upstream, writer mr.Writer[rest.Route], cance
 	if s.dialer != nil {
 		cli = s.dialer(*up.Grpc)
 	} else {
-		cli = zrpc.MustNewClient(*up.Grpc)
+		// 设置最多可接收100M
+		opt := zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100 * 1024 * 1024)))
+		cli = zrpc.MustNewClient(*up.Grpc, opt)
+
 	}
 	s.conns = append(s.conns, cli)
 
